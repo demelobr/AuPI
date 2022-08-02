@@ -4,7 +4,6 @@ from models.user import UserModel
 from credentials import BASE_URL
 from hash import hash_password, check_hashed_password
 from flask_jwt_extended import create_access_token, get_jwt, jwt_required, decode_token
-from werkzeug.security import safe_str_cmp
 import re
 
 def is_email(user_email):
@@ -15,10 +14,12 @@ def is_email(user_email):
 def received_data(login=False):
     arguments = reqparse.RequestParser()
     arguments.add_argument('user_username', type=str, required=True, help="The field 'user_username' cannot be left blank.")
+    arguments.add_argument('user_name', type=str, required=True, help="The field 'user_name' cannot be left blank.")
     if login:
         arguments.add_argument('user_email')
     else:
         arguments.add_argument('user_email', type=str, required=True, help="The field 'user_email' cannot be left blank.")
+    arguments.add_argument('user_phone_number', type=str, required=True, help="The field 'user_phone_number' cannot be left blank.")
     arguments.add_argument('user_password', type=str, required=True, help="The field 'user_password' cannot be left blank.")
 
     return arguments    
@@ -33,11 +34,14 @@ class User(Resource):
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
         if user:
-            if jwt_id == user.user_jwt or current_user.user_sudo:
-                return user.json()
+            if user.user_activated:
+                if jwt_id == user.user_jwt or current_user.user_sudo:
+                    return user.json()
+                
+                return {'message':"You do not have access to '{}' information".format(user_username)}
             
-            return {'message':"You do not have access to '{}' information".format(user_username)}
-            
+            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(user.user_username, user.user_email)}, 401
+        
         return {'message':"User '{}' not found".format(user_username)}, 404
 
     @jwt_required()
@@ -48,29 +52,40 @@ class User(Resource):
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
         if user:
-            if jwt_id == user.user_jwt or current_user.user_sudo:
-                if data['user_username'] != user_username and UserModel.find_user_by_username(data['user_username']):
-                    return {'message':"The User '{}' already exists.".format(data['user_username'])}, 400
+            if user.user_activated:
+                if jwt_id == user.user_jwt or current_user.user_sudo:
+                    if data['user_username'] != user_username and UserModel.find_user_by_username(data['user_username']):
+                        return {'message':"The User '{}' already exists.".format(data['user_username'])}, 400
 
-                if data['user_email'] != user.user_email and UserModel.find_user_by_email(data['user_email']):
-                    return {'message':"The Email '{}' is already registered in another account.".format(data['user_email'])}, 400
+                    if data['user_email'] != user.user_email and UserModel.find_user_by_email(data['user_email']):
+                        return {'message':"The Email '{}' is already registered in another account.".format(data['user_email'])}, 400
 
-                if not is_email(data['user_email']):
-                    return {'message':"The email '{}' sent is not valid.".format(data['user_email'])}
+                    if not is_email(data['user_email']):
+                        return {'message':"The email '{}' sent is not valid.".format(data['user_email'])}
 
-                data['user_password'] = hash_password(data['user_password'])
-                
-                user.update_user(**data)
-                
-                try:
-                    user.save_user()
-                except:
-                    return {'message':'An internal error ocurred trying to save user.'}, 500
-                
-                return user.json(), 200
+                    if data['user_email'] != user.user_email:
+                        user.user_activated = False
 
-            return {'message':"You do not have access to edit '{}' information".format(user_username)}
-        
+                    data['user_password'] = hash_password(data['user_password'])
+                    
+                    user.user_code_confirm_generator()
+                    
+                    user.update_user(**data)
+                    
+                    try:
+                        user.save_user()
+                        if user.user_activated == False:
+                            confirmation_link = "{}confirm/{}/{}".format( BASE_URL, data['user_username'], user.user_code_confirm)
+                            user.send_confirmation_email(confirmation_link)
+                    except:
+                        return {'message':'An internal error ocurred trying to save user.'}, 500
+                    
+                    return user.json(), 200
+
+                return {'message':"You do not have access to edit '{}' information".format(user_username)}
+
+            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(user.user_username, user.user_email)}, 401
+
         return {'message':"User '{}' not found.".format(user_username)}, 404
 
     @jwt_required()
@@ -80,11 +95,14 @@ class User(Resource):
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
         if user:
-            if jwt_id == user.user_jwt or current_user.user_sudo:
-                user.delete_user()
-                return {'message':"User '{}' deleted.".format(user_username)}
+            if user.user_activated:
+                if jwt_id == user.user_jwt or current_user.user_sudo:
+                    user.delete_user()
+                    return {'message':"User '{}' deleted.".format(user_username)}
+                
+                return {'message':"You do not have access to delete '{}' information".format(user_username)}
             
-            return {'message':"You do not have access to delete '{}' information".format(user_username)}
+            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
         
         return {'message':"User '{}' not found.".format(user_username)}, 404
 
@@ -144,7 +162,7 @@ class UserLogin(Resource):
                     except:
                         return {'message':'An internal error ocurred trying to save user.'}, 500
 
-                return {'message':"User '{}' not confirmed.".format(data['user_username'])}, 401
+                return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(data['user_username'], user.user_email)}, 401
             
             return {'message':'Username or password is incorrect.'}, 401
 
