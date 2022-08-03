@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template
 from flask_restful import Api
 from blacklist import BLACKLIST
+from models.user import UserModel, create_admin
 #from resources.dog import Dogs, Dog
 #from resources.shelter import Shelter, Shelters
 from resources.user import User, UserConfirm, UserRegister, UserLogin, UserLogout
@@ -22,8 +23,9 @@ jwt = JWTManager(app)
 
 
 @app.before_first_request
-def create_db():
+def startup():
     db.create_all()
+    create_admin()
 
 @jwt.token_in_blocklist_loader
 def blacklist_verify(self, token):

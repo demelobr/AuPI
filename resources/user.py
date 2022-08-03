@@ -25,7 +25,6 @@ def received_data(login=False):
     return arguments    
 
 class User(Resource):
-    arguments = received_data()
     
     @jwt_required()
     def get(self, user_username):
@@ -33,26 +32,27 @@ class User(Resource):
         jwt_id = get_jwt()['jti']
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
-        if user:
-            if current_user.user_activated:
+        if current_user.user_activated:
+            if user:
                 if jwt_id == user.user_jwt or current_user.user_sudo:
                     return user.json()
                 
                 return {'message':"You do not have access to '{}' information".format(user_username)}
-            
-            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
         
-        return {'message':"User '{}' not found".format(user_username)}, 404
+            return {'message':"User '{}' not found".format(user_username)}, 404
+
+        return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
 
     @jwt_required()
     def put(self, user_username):
-        data = User.arguments.parse_args()
+        arguments = received_data()
+        data = arguments.parse_args()
         user = UserModel.find_user_by_username(user_username)
         jwt_id = get_jwt()['jti']
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
-        if user:
-            if current_user.user_activated:
+        if current_user.user_activated:
+            if user:
                 if jwt_id == user.user_jwt or current_user.user_sudo:
                     if data['user_username'] != user_username and UserModel.find_user_by_username(data['user_username']):
                         return {'message':"The User '{}' already exists.".format(data['user_username'])}, 400
@@ -84,9 +84,9 @@ class User(Resource):
 
                 return {'message':"You do not have access to edit '{}' information".format(user_username)}
 
-            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+            return {'message':"User '{}' not found.".format(user_username)}, 404
 
-        return {'message':"User '{}' not found.".format(user_username)}, 404
+        return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
 
     @jwt_required()
     def delete(self, user_username):
@@ -94,17 +94,17 @@ class User(Resource):
         jwt_id = get_jwt()['jti']
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
-        if user:
-            if current_user.user_activated:
+        if current_user.user_activated:
+            if user:
                 if jwt_id == user.user_jwt or current_user.user_sudo:
                     user.delete_user()
                     return {'message':"User '{}' deleted.".format(user_username)}
                 
                 return {'message':"You do not have access to delete '{}' information".format(user_username)}
-            
-            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
         
-        return {'message':"User '{}' not found.".format(user_username)}, 404
+            return {'message':"User '{}' not found.".format(user_username)}, 404
+
+        return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
 
 class UserRegister(Resource):
     
@@ -127,7 +127,6 @@ class UserRegister(Resource):
         data['user_password'] = hash_password(data['user_password'])
 
         user = UserModel(**data)
-        #user.user_sudo = True
         user.user_code_confirm_generator()
         
         try:
