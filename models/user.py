@@ -8,20 +8,6 @@ import random
 import os
 import smtplib
 
-def create_admin():
-    global USER_PASSWORD
-    USER_PASSWORD = hash_password(USER_PASSWORD)
-    admin = UserModel(USER_USERNAME, USER_NAME, USER_EMAIL, USER_PHONE_NUMBER, USER_PASSWORD)
-    admin.user_activated = True
-    admin.user_sudo = True
-
-    try:
-        admin.save_user()
-    except:
-        return {'message':'An internal error ocurred trying to create admin.'}, 500
-
-    return {'message': 'User admin was created successfully!'}, 201
-
 class UserModel(db.Model):
     __tablename__ = 'users'
 
@@ -52,6 +38,22 @@ class UserModel(db.Model):
             'user_activated': self.user_activated
         }
     
+    @classmethod
+    def create_admin(cls):
+        global USER_PASSWORD
+        USER_PASSWORD = hash_password(USER_PASSWORD)
+        admin = UserModel(USER_USERNAME, USER_NAME, USER_EMAIL, USER_PHONE_NUMBER, USER_PASSWORD)
+        admin.user_activated = True
+        admin.user_sudo = True
+
+        try:
+            admin.save_user()
+        except:
+            return {'message':'An internal error ocurred trying to create admin.'}, 500
+
+        return {'message': 'User admin was created successfully!'}, 201
+
+
     @classmethod
     def find_user_by_username(cls, user_username):
         user = cls.query.filter_by(user_username=user_username).first()
