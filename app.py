@@ -2,8 +2,8 @@ from flask import Flask, jsonify, render_template
 from flask_restful import Api
 from blacklist import BLACKLIST
 from models.user import UserModel
-#from resources.dog import Dogs, Dog
-#from resources.shelter import Shelter, Shelters
+from resources.dog import Dogs, Dog
+from resources.shelter import Shelter, Shelters
 from resources.user import User, UserConfirm, UserRegister, UserLogin, UserLogout
 from flask_jwt_extended import JWTManager
 from credentials import SECRET_KEY
@@ -39,10 +39,10 @@ def invalid_access_token(jwt_header, jwt_payload):
 def index():
     return render_template('index.html')'''
 
-'''api.add_resource(Shelters, '/shelters')
+api.add_resource(Shelters, '/shelters')
 api.add_resource(Shelter, '/shelters/<string:shelter_name>')
 api.add_resource(Dogs, '/dogs')
-api.add_resource(Dog, '/dogs/<int:dog_id>')'''
+api.add_resource(Dog, '/dogs/<int:dog_id>')
 api.add_resource(User, '/users/<string:user_username>')
 api.add_resource(UserRegister, '/register')
 api.add_resource(UserLogin, '/login')

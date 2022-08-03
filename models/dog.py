@@ -1,3 +1,4 @@
+from datetime import datetime
 from models.shelter import ShelterModel
 from sql_alchemy import db
 
@@ -37,6 +38,13 @@ class DogModel(db.Model):
         if dog:
             return dog
         return False  
+
+    def is_date(self):
+        format_date = "%d/%m/%Y"
+        try:
+            return bool(datetime.strptime(self.dog_birth_date, format_date))
+        except ValueError:
+            return False
 
     def set_dog_location(self):
         shelter = ShelterModel.find_shelter_by_name(self.dog_shelter)

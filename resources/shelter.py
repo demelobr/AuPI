@@ -58,7 +58,7 @@ class Shelter(Resource):
 
         if current_user.user_activated:
             if shelter:
-                shelter.delete()
+                shelter.delete_shelter()
                 return {'message':"Shelter '{}' deleted.".format(shelter_name)}
 
             return {'message':"User '{}' not found.".format(shelter_name)}, 404
