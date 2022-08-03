@@ -7,7 +7,7 @@ class ShelterModel(db.Model):
     shelter_name = db.Column(db.String(40), nullable=False, unique=True)
     shelter_accountable = db.Column(db.String(40), nullable=False)
     shelter_email = db.Column(db.String(80), nullable=False, unique=True)
-    shelter_phone_number = db.Column(db.String(20), nulllable=False)
+    shelter_phone_number = db.Column(db.String(20), nullable=False)
     shelter_address = db.Column(db.String(100), nullable=False)
     shelter_country = db.Column(db.String(20), nullable=False)
     shelter_state = db.Column(db.String(20), nullable=False)
@@ -57,7 +57,7 @@ class ShelterModel(db.Model):
         self.shelter_country = shelter_country
         self.shelter_state = shelter_state
         self.shelter_city = shelter_city
-        
+
     def delete_shelter(self):
         [dog.delete_hotel() for dog in self.shelter_dogs]
         db.session.delete(self)
