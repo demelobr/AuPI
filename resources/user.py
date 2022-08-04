@@ -1,3 +1,4 @@
+from flask import make_response, render_template
 from flask_restful import Resource, reqparse
 from blacklist import BLACKLIST
 from credentials import BASE_URL
@@ -102,7 +103,7 @@ class User(Resource):
                     user.delete_user()
                     if not current_user.user_sudo:
                         BLACKLIST.add(jwt_id)
-                        
+
                     return {'message':"User '{}' deleted.".format(user_username)}
                 
                 return {'message':"You do not have access to delete '{}' information".format(user_username)}
@@ -194,6 +195,6 @@ class UserConfirm(Resource):
             
             try:
                 user.save_user()
-                return {'message':"User '{}' confirmed successfully!".format(user_username)}, 201
+                return make_response(render_template('email_confirmed.html', user=user))
             except:
                 return {'message':'An internal error ocurred trying to save user.'}, 500    

@@ -35,9 +35,9 @@ def blacklist_verify(self, token):
 def invalid_access_token(jwt_header, jwt_payload):
     return jsonify({'message':'You have been logged out.'}), 401
 
-'''@app.route('/')
+@app.route('/')
 def index():
-    return render_template('index.html')'''
+    return render_template('index.html')
 
 api.add_resource(Shelters, '/shelters')
 api.add_resource(Shelter, '/shelters/<string:shelter_name>')
