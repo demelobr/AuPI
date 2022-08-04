@@ -35,8 +35,8 @@ class Shelter(Resource):
         jwt_id = get_jwt()['jti']
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
-        if current_user.user_activated:
-            if shelter:
+        if shelter:
+            if current_user.user_activated:
                 shelter.update_shelter(**data)
                 try:
                     shelter.save_shelter()
@@ -44,11 +44,11 @@ class Shelter(Resource):
                     return {'message':'An internal error ocurred trying to save shelter.'}, 500
                 
                 return shelter.json(), 200
-
-            return {'message':"Shelter '{}' not found.".format(shelter_name)}, 404
         
-        return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
-    
+            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+        
+        return {'message':"Shelter '{}' not found.".format(shelter_name)}, 404
+
     @jwt_required()
     def delete(self, shelter_name):
         shelter = ShelterModel.find_shelter_by_name(shelter_name)
@@ -56,15 +56,14 @@ class Shelter(Resource):
         jwt_id = get_jwt()['jti']
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
-        if current_user.user_activated:
-            if shelter:
+        if shelter:
+            if current_user.user_activated:
                 shelter.delete_shelter()
                 return {'message':"Shelter '{}' deleted.".format(shelter_name)}
-
-            return {'message':"User '{}' not found.".format(shelter_name)}, 404
         
-        return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
 
+        return {'message':"User '{}' not found.".format(shelter_name)}, 404
 
 class Shelters(Resource):
 
