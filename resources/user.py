@@ -14,12 +14,14 @@ def is_email(user_email):
 def received_data(login=False):
     arguments = reqparse.RequestParser()
     arguments.add_argument('user_username', type=str, required=True, help="The field 'user_username' cannot be left blank.")
-    arguments.add_argument('user_name', type=str, required=True, help="The field 'user_name' cannot be left blank.")
     if login:
+        arguments.add_argument('user_name')
         arguments.add_argument('user_email')
+        arguments.add_argument('user_phone_number')
     else:
+        arguments.add_argument('user_name', type=str, required=True, help="The field 'user_name' cannot be left blank.")
         arguments.add_argument('user_email', type=str, required=True, help="The field 'user_email' cannot be left blank.")
-    arguments.add_argument('user_phone_number', type=str, required=True, help="The field 'user_phone_number' cannot be left blank.")
+        arguments.add_argument('user_phone_number', type=str, required=True, help="The field 'user_phone_number' cannot be left blank.")
     arguments.add_argument('user_password', type=str, required=True, help="The field 'user_password' cannot be left blank.")
 
     return arguments    
@@ -32,17 +34,17 @@ class User(Resource):
         jwt_id = get_jwt()['jti']
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
-        if current_user.user_activated:
-            if user:
+        if user:
+            if current_user.user_activated:            
                 if jwt_id == user.user_jwt or current_user.user_sudo:
                     return user.json()
                 
                 return {'message':"You do not have access to '{}' information".format(user_username)}
+
+            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
         
-            return {'message':"User '{}' not found".format(user_username)}, 404
-
-        return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
-
+        return {'message':"User '{}' not found".format(user_username)}, 404
+    
     @jwt_required()
     def put(self, user_username):
         arguments = received_data()
@@ -51,8 +53,8 @@ class User(Resource):
         jwt_id = get_jwt()['jti']
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
-        if current_user.user_activated:
-            if user:
+        if user:
+            if current_user.user_activated:
                 if jwt_id == user.user_jwt or current_user.user_sudo:
                     if data['user_username'] != user_username and UserModel.find_user_by_username(data['user_username']):
                         return {'message':"The User '{}' already exists.".format(data['user_username'])}, 400
@@ -84,9 +86,9 @@ class User(Resource):
 
                 return {'message':"You do not have access to edit '{}' information".format(user_username)}
 
-            return {'message':"User '{}' not found.".format(user_username)}, 404
+            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
 
-        return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+        return {'message':"User '{}' not found.".format(user_username)}, 404
 
     @jwt_required()
     def delete(self, user_username):
@@ -94,17 +96,20 @@ class User(Resource):
         jwt_id = get_jwt()['jti']
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
-        if current_user.user_activated:
-            if user:
+        if user:    
+            if current_user.user_activated:
                 if jwt_id == user.user_jwt or current_user.user_sudo:
                     user.delete_user()
+                    if not current_user.user_sudo:
+                        BLACKLIST.add(jwt_id)
+                        
                     return {'message':"User '{}' deleted.".format(user_username)}
                 
                 return {'message':"You do not have access to delete '{}' information".format(user_username)}
-        
-            return {'message':"User '{}' not found.".format(user_username)}, 404
 
-        return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+
+        return {'message':"User '{}' not found.".format(user_username)}, 404
 
 class UserRegister(Resource):
     
