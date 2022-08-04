@@ -6,10 +6,10 @@ from flask_jwt_extended import jwt_required, get_jwt
 
 def received_data():
     arguments = reqparse.RequestParser()
-    arguments.add_argument('dog_name ', type=str, required=True, help="The field 'dog_name' cannot be left blank.")
-    arguments.add_argument('dog_shelter ', type=str, required=True, help="The field 'dog_shelter' cannot be left blank.")
-    arguments.add_argument('dog_birth_date ', type=str, required=True, help="The field 'dog_birth_date' cannot be left blank.")
-    arguments.add_argument('dog_gender ', type=str, required=True, help="The field 'dog_gender' cannot be left blank.")
+    arguments.add_argument('dog_name', type=str, required=True, help="The field 'dog_name' cannot be left blank.")
+    arguments.add_argument('dog_shelter', type=str, required=True, help="The field 'dog_shelter' cannot be left blank.")
+    arguments.add_argument('dog_birth_date', type=str, required=True, help="The field 'dog_birth_date' cannot be left blank.")
+    arguments.add_argument('dog_gender', type=str, required=True, help="The field 'dog_gender' cannot be left blank.")
 
     return arguments
 
@@ -32,9 +32,9 @@ class Dog(Resource):
 
         jwt_id = get_jwt()['jti']
         current_user = UserModel.find_user_by_jwt(jwt_id)
-
-        if current_user.user_activated:
-            if dog:
+        
+        if dog:
+            if current_user.user_activated:
                 if shelter:
                     dog.update_dog(**data)
                     if dog.is_date():
@@ -47,11 +47,11 @@ class Dog(Resource):
 
                     return {'message': "Unable to save the dog as the birthday date format must be 'dd/mm/yyyy'."}, 401
                 
-                return {'message':"Shelter '{}' not found.".format(shelter.shelter_name)}, 404
+                return {'message':"Shelter '{}' not found.".format(data['dog_shelter'])}, 404
 
-            return {'message':"Dog with ID:{} not found.".format(dog_id)}, 404
+            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
 
-        return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+        return {'message':"Dog with ID:{} not found.".format(dog_id)}, 404
 
     @jwt_required()
     def delete(self, dog_id):
@@ -60,20 +60,20 @@ class Dog(Resource):
         jwt_id = get_jwt()['jti']
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
-        if current_user.user_activated:
-            if dog:
+        if dog:
+            if current_user.user_activated:
                 dog.delete_dog()
                 return {'message':"Dog with ID:{} deleted.".format(dog_id)}
 
-            return {'message':"Dog with ID:{} not found.".format(dog_id)}, 404
+            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
 
-        return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
-
+        return {'message':"Dog with ID:{} not found.".format(dog_id)}, 404
+        
 class Dogs(Resource):
     query_params = reqparse.RequestParser()
     query_params.add_argument('name', type=str, default="", location="args")
     query_params.add_argument('shelter', type=str, default="", location="args")
-    query_params.add_argument('birth_date ', type=str, default="", location="args")
+    query_params.add_argument('birth_date', type=str, default="", location="args")
     query_params.add_argument('gender', type=str, default="", location="args")
     query_params.add_argument('country', type=str, default="", location="args")
     query_params.add_argument('state', type=str, default="", location="args")
@@ -115,9 +115,10 @@ class Dogs(Resource):
         jwt_id = get_jwt()['jti']
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
-        if current_user.user_activated:
-            if shelter:
+        if shelter:    
+            if current_user.user_activated:
                 dog = DogModel(**data)
+                dog.set_dog_location()
                 if dog.is_date():
                     try:
                         dog.save_dog()
@@ -126,8 +127,8 @@ class Dogs(Resource):
 
                     return dog.json(), 201
 
-                return {'message': "Unable to save the dog as the birthday date format must be 'dd/mm/yyyy'."}, 401
+                return {'message': "Unable to save the dog as the birthday date format must be 'dd/mm/yyyy'."}, 401   
 
-            return {'message':"Shelter '{}' deleted.".format(shelter.shelter_name)}   
+            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
 
-        return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+        return {'message':"Shelter '{}' not found.".format(data['dog_shelter'])}, 404
