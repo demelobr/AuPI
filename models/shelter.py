@@ -59,6 +59,6 @@ class ShelterModel(db.Model):
         self.shelter_city = shelter_city
 
     def delete_shelter(self):
-        [dog.delete_hotel() for dog in self.shelter_dogs]
+        [dog.delete_dog() for dog in self.shelter_dogs]
         db.session.delete(self)
         db.session.commit()
