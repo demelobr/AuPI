@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Bree+Serif&family=League+Spartan:wght@200;500&display=swap');
+
+body{
+    margin: auto;
+    font-family: 'League Spartan', sans-serif;
+    display: flex;
+    background-color: #008584;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.nav-menu{
+    width: 100%;
+    height: 75px;
+    position: sticky;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 1.5rem;
+    transition: all 0.3s ease 0s;
+    z-index: 10;
+}
+
+.nav-menu .navbar-logo{
+    text-decoration: none;
+    color: yellow;
+    font-size: 45px;
+    font-family: 'Bree Serif', serif;
+}
+
+.nav-itens{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+.nav-item a{
+    display: flex;
+    align-items: center;
+    border-radius: 10px;
+    background-color: yellow;
+    color: #006666;
+    transition: 0.3s;
+    font-size: 20px;
+}
+
+.nav-item a:hover{
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    color: #006666;
+    -webkit-box-shadow: 5px 5px 10px 0px rgba(0,0,0,0.75);
+    -moz-box-shadow: 5px 5px 10px 0px rgba(0,0,0,0.75);
+    box-shadow: 5px 5px 10px 0px rgba(0,0,0,0.75);
+}

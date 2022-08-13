@@ -1,13 +1,22 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuPI - Email confirmado!</title>
-</head>
-<body>
-    <h1>Email confirmado {{ user.user_name }}!</h1>
-    <p>Aumigo, sua conta {{ user.user_username }} foi ativada com sucesso!</p>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+    <main id="banner">
+        <div class="container">
+            <div class="envelope">
+                <div class="paper">
+                    <p>bem-vindo aumigo<br>{{ user.user_name }}!</p>
+                    <img src="/static/images/dog.png">
+                </div>
+                <div class="inner1">
+                    <div class="inner2"></div>
+                </div>
+                <div class="cover"></div>
+            </div>
+        </div>
+        <h2><span>{{ user.user_name }}</span>, seu email foi confirmado com sucesso!<br>Sua conta <span>@{{ user.user_username }}</span> está pronta para ser utilizada.</h2>
+        <p>Você já pode começar a usar nossa <span>AuPi</span>. Consulte nossa <a href="{{ base_url }}">documentação</a>!</p>     
+    </main>
+    <footer>
+        <p>Made with code and love by <span>Demelobr</span>.</p>
+    </footer>
+{% endblock %}

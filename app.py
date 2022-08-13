@@ -25,7 +25,7 @@ jwt = JWTManager(app)
 @app.before_first_request
 def startup():
     db.create_all()
-    UserModel.create_admin()
+    #UserModel.create_admin()
 
 @jwt.token_in_blocklist_loader
 def blacklist_verify(self, token):

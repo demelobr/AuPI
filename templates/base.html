@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuPi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='base.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='index.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='email_confirmed.css') }}">
+</head>
+<body>
+    <!-- =====================================================================
+        Navbar
+        ===================================================================== -->
+    <header>
+        <nav id="navbar" class="nav-menu">
+            <a class="navbar-logo" href="/">AuPi</a>
+            <div class="nav-itens">
+                <ul class="navigation nav justify-content-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ base_url }}">Entrar</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    {% block content %}{% endblock %}
+
+</body>
+</html>

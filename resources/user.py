@@ -195,6 +195,6 @@ class UserConfirm(Resource):
             
             try:
                 user.save_user()
-                return make_response(render_template('email_confirmed.html', user=user))
+                return make_response(render_template('email_confirmed.html', user=user, base_url=BASE_URL))
             except:
                 return {'message':'An internal error ocurred trying to save user.'}, 500    
