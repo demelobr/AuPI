@@ -2,10 +2,12 @@ from flask import make_response, render_template
 from flask_restful import Resource, reqparse
 from blacklist import BLACKLIST
 from credentials import BASE_URL
+from models.request import RequestModel
 from models.user import UserModel
 from hash import hash_password, check_hashed_password
 from flask_jwt_extended import create_access_token, get_jwt, jwt_required, decode_token
 import re
+import datetime
 
 def is_email(user_email):
     if re.search(r'[a-zA-Z0-9_-]+@[a-zA-Z0-9]+\.[a-zA-Z]{1,3}$', user_email):
@@ -40,7 +42,7 @@ class User(Resource):
                 if jwt_id == user.user_jwt or current_user.user_sudo:
                     return user.json()
                 
-                return {'message':"You do not have access to '{}' information".format(user_username)}
+                return {'message':"You do not have access to '{}' information".format(user_username)}, 203
 
             return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
         
@@ -85,7 +87,7 @@ class User(Resource):
                     
                     return user.json(), 200
 
-                return {'message':"You do not have access to edit '{}' information".format(user_username)}
+                return {'message':"You do not have access to edit '{}' information".format(user_username)}, 203
 
             return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
 
@@ -106,7 +108,7 @@ class User(Resource):
 
                     return {'message':"User '{}' deleted.".format(user_username)}
                 
-                return {'message':"You do not have access to delete '{}' information".format(user_username)}
+                return {'message':"You do not have access to delete '{}' information".format(user_username)}, 203
 
             return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
 
@@ -119,16 +121,16 @@ class UserRegister(Resource):
         data = arguments.parse_args()
 
         if UserModel.find_user_by_username(data['user_username']):
-            return {'message':"The User '{}' already exists.".format(data['user_username'])}, 400
+            response = {'message':"The User '{}' already exists.".format(data['user_username'])}, 400
 
         if not data.get('user_email') or data.get('user_email') is None:
-            return {'message':"The field 'user_email' cannot be left blank."}, 400
+            response = {'message':"The field 'user_email' cannot be left blank."}, 400
 
         if not is_email(data['user_email']):
-            return {'message':"The email '{}' sent is not valid.".format(data['user_email'])}
+            response = {'message':"The email '{}' sent is not valid.".format(data['user_email'])}
 
         if UserModel.find_user_by_email(data['user_email']):
-            return {'message':"The Email '{}' is already registered in another account.".format(data['user_email'])}, 400
+            response = {'message':"The Email '{}' is already registered in another account.".format(data['user_email'])}, 400
         
         data['user_password'] = hash_password(data['user_password'])
 
@@ -140,12 +142,23 @@ class UserRegister(Resource):
             confirmation_link = "{}confirm/{}/{}".format( BASE_URL, data['user_username'], user.user_code_confirm)
             user.send_confirmation_email(confirmation_link)
             
-            return {
+            response = {
                     'message':"User '{}' created successfully! Confirm your account by accessing your email '{}'".format(data['user_username'], data['user_email']), 
                     'confirmation_link': confirmation_link                
             }, 201
+        
         except:
-            return {'message':'An internal error ocurred trying to save user.'}, 500
+            response = {'message':'An internal error ocurred trying to save user.'}, 500
+        
+        request_datetime = str(datetime.datetime.now(datetime.timezone.utc))
+        request = RequestModel(request_datetime, data['user_username'], "POST", "/register",response[1])
+
+        try:
+            request.save_request()
+        except:
+            print("An internal error ocurred trying to save request.")
+
+        return response
 
 class UserLogin(Resource):
 
