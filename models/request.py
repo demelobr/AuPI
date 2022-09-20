@@ -8,14 +8,16 @@ class RequestModel(db.Model):
     request_owner = db.Column(db.String(20), db.ForeignKey('users.user_username'), nullable=False)
     request_method = db.Column(db.String(20), nullable=False)
     request_url = db.Column(db.String, nullable=False)
-    resquest_response = db.Column(db.String(3), nullable=False)
+    request_message = db.Column(db.String, nullable=False)
+    resquest_code = db.Column(db.String(3), nullable=False)
 
-    def __init__(self, request_datetime, request_owner, request_method, request_url, resquest_response):
+    def __init__(self, request_datetime, request_owner, request_method, request_url, request_message, resquest_code):
         self.request_datetime = request_datetime
         self.request_owner = request_owner
         self.request_method = request_method
         self.request_url = request_url
-        self.resquest_response = resquest_response
+        self.request_message = request_message
+        self.resquest_code = resquest_code
     
     def json(self):
         return{
@@ -24,7 +26,8 @@ class RequestModel(db.Model):
             'request_owner': self.request_owner,
             'request_method': self.request_method,
             'request_url': self.request_url,
-            'resquest_response': self.resquest_response
+            'request_message': self.request_message,
+            'resquest_code': self.resquest_code
         }
     
     @classmethod

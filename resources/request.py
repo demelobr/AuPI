@@ -1,7 +1,5 @@
 from flask_restful import Resource
-from models.dog import DogModel
 from models.request import RequestModel
-from models.shelter import ShelterModel
 from models.user import UserModel
 from flask_jwt_extended import jwt_required, get_jwt
 
