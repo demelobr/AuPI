@@ -5,7 +5,7 @@ from models.user import UserModel
 from resources.dog import Dogs, Dog
 from resources.shelter import Shelter, Shelters
 from resources.user import User, UserConfirm, UserRegister, UserLogin, UserLogout
-from resources.request import Request
+from resources.request import Request, Requests
 from flask_jwt_extended import JWTManager
 from credentials import SECRET_KEY
 import datetime
@@ -49,6 +49,7 @@ api.add_resource(UserRegister, '/register')
 api.add_resource(UserLogin, '/login')
 api.add_resource(UserLogout, '/logout')
 api.add_resource(UserConfirm, '/confirm/<string:user_username>/<string:user_code_confirm>')
+api.add_resource(Requests, '/requests')
 api.add_resource(Request, '/request/<int:request_id>')
 
 if __name__ == '__main__':

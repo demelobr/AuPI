@@ -1,6 +1,7 @@
 from flask_restful import Resource, reqparse
 from models.shelter import ShelterModel
 from models.user import UserModel
+from sql_alchemy import db
 from flask_jwt_extended import jwt_required, get_jwt
 
 def received_data():
@@ -81,29 +82,34 @@ class Shelters(Resource):
     
     def get(self):
         filters = Shelters.query_params.parse_args()
-        query = ShelterModel.query
+        all_filters = []
 
         if filters['name']:
-            query.filter(ShelterModel.shelter_name.like(filters['name']))
+            all_filters.append(ShelterModel.shelter_name.like(filters['name']))
         if filters['accountable']:
-            query.filter(ShelterModel.shelter_accountable.like(filters['accountable']))
+            all_filters.append(ShelterModel.shelter_accountable.like(filters['accountable']))
         if filters['email']:
-            query.filter(ShelterModel.shelter_email.like(filters['email']))
+            all_filters.append(ShelterModel.shelter_email.like(filters['email']))
         if filters['phone_number']:
-            query.filter(ShelterModel.shelter_phone_number.like(filters['phone_number']))
+            all_filters.append(ShelterModel.shelter_phone_number.like(filters['phone_number']))
         if filters['address']:
-            query.filter(ShelterModel.shelter_address.like(filters['address']))
+            all_filters.append(ShelterModel.shelter_address.like(filters['address']))
         if filters['country']:
-            query.filter(ShelterModel.shelter_country.like(filters['country']))
+            all_filters.append(ShelterModel.shelter_country.like(filters['country']))
         if filters['state']:
-            query.filter(ShelterModel.shelter_state.like(filters['state']))
+            all_filters.append(ShelterModel.shelter_state.like(filters['state']))
         if filters['city']:
-            query.filter(ShelterModel.shelter_city.like(filters['city']))
-        if filters['limit']:
-            query = query.limit(filters["limit"])
-        if filters['offset']:
-            query = query.offset(filters["offset"])
-        
+            all_filters.append(ShelterModel.shelter_city.like(filters['city']))
+
+        if not filters['limit'] and not filters['offset']:
+            query = db.session.query(ShelterModel).filter(*all_filters).all()
+        elif filters['limit'] and not filters['offset']:
+            query = db.session.query(ShelterModel).filter(*all_filters).limit(filters['limit']).all()
+        elif not filters['limit'] and filters['offset']:
+            query = db.session.query(ShelterModel).filter(*all_filters).offset(filters['offset']).all()
+        else:
+            query = db.session.query(ShelterModel).filter(*all_filters).limit(filters['limit']).offset(filters['offset']).all()
+
         return {"shelters": [shelter.json() for shelter in query]}
 
     @jwt_required()

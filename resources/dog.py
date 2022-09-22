@@ -3,6 +3,7 @@ from models.dog import DogModel
 from models.shelter import ShelterModel
 from models.user import UserModel
 from flask_jwt_extended import jwt_required, get_jwt
+from sql_alchemy import db
 
 def received_data():
     arguments = reqparse.RequestParser()
@@ -83,27 +84,32 @@ class Dogs(Resource):
 
     def get(self):
         filters = Dogs.query_params.parse_args()
-        query = DogModel.query
+        all_filters = []
 
         if filters['name']:
-            query.filter(DogModel.dog_name.like(filters['name']))
+            all_filters.append(DogModel.dog_name.like(filters['name']))
         if filters['shelter']:
-            query.filter(DogModel.dog_shelter.like(filters['shelter']))
+            all_filters.append(DogModel.dog_shelter.like(filters['shelter']))
         if filters['birth_date']:
-            query.filter(DogModel.dog_birth_date.like(filters['birth_date']))
+            all_filters.append(DogModel.dog_birth_date.like(filters['birth_date']))
         if filters['gender']:
-            query.filter(DogModel.dog_gender.like(filters['gender']))
+            all_filters.append(DogModel.dog_gender.like(filters['gender']))
         if filters['country']:
-            query.filter(DogModel.dog_country.like(filters['country']))
+            all_filters.append(DogModel.dog_country.like(filters['country']))
         if filters['state']:
-            query.filter(DogModel.dog_state.like(filters['state']))
+            all_filters.append(DogModel.dog_state.like(filters['state']))
         if filters['city']:
-            query.filter(DogModel.dog_city.like(filters['city']))
-        if filters['limit']:
-            query = query.limit(filters["limit"])
-        if filters['offset']:
-            query = query.offset(filters["offset"])
-        
+            all_filters.append(DogModel.dog_city.like(filters['city']))
+
+        if not filters['limit'] and not filters['offset']:
+            query = db.session.query(DogModel).filter(*all_filters).all()
+        elif filters['limit'] and not filters['offset']:
+            query = db.session.query(DogModel).filter(*all_filters).limit(filters['limit']).all()
+        elif not filters['limit'] and filters['offset']:
+            query = db.session.query(DogModel).filter(*all_filters).offset(filters['offset']).all()
+        else:
+            query = db.session.query(DogModel).filter(*all_filters).limit(filters['limit']).offset(filters['offset']).all()
+
         return {"dogs": [dog.json() for dog in query]}
 
     @jwt_required()
