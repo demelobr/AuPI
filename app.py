@@ -50,7 +50,7 @@ api.add_resource(UserLogin, '/login')
 api.add_resource(UserLogout, '/logout')
 api.add_resource(UserConfirm, '/confirm/<string:user_username>/<string:user_code_confirm>')
 api.add_resource(Requests, '/requests')
-api.add_resource(Request, '/request/<int:request_id>')
+api.add_resource(Request, '/requests/<int:request_id>')
 
 if __name__ == '__main__':
     from sql_alchemy import db

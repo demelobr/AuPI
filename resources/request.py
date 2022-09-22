@@ -1,4 +1,5 @@
 from asyncio.windows_events import NULL
+from email.policy import default
 from flask_restful import Resource, reqparse
 from models.request import RequestModel
 from models.user import UserModel
@@ -42,11 +43,11 @@ class Request(Resource):
 
         return {'message':"The user '{}' is not authorized for this resource.".format(current_user.user_username)}, 203
 
-
 class Requests(Resource):
     query_params = reqparse.RequestParser()
     query_params.add_argument('datetime', type=str, default="", location="args")
     query_params.add_argument('owner', type=str, default="", location="args")
+    query_params.add_argument('resource', type=str, default="", location="args")
     query_params.add_argument('method', type=str, default="", location="args")
     query_params.add_argument('url', type=str, default="", location="args")
     query_params.add_argument('message', type=str, default="", location="args")
@@ -63,6 +64,8 @@ class Requests(Resource):
             all_filters.append(RequestModel.request_datetime.like(filters['datetime']))
         if filters['owner']:
             all_filters.append(RequestModel.request_owner.like(filters['owner']))
+        if filters['resource']:
+            all_filters.append(RequestModel.request_resource.like(filters['resource']))
         if filters['method']:
             all_filters.append(RequestModel.request_method.like(filters['method']))
         if filters['url']:
@@ -80,7 +83,7 @@ class Requests(Resource):
             query = db.session.query(RequestModel).filter(*all_filters).offset(filters['offset']).all()
         else:
             query = db.session.query(RequestModel).filter(*all_filters).limit(filters['limit']).offset(filters['offset']).all()
-            
+
         return {"requests": [request.json() for request in query]}
 
     @jwt_required()

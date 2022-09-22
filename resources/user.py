@@ -1,14 +1,12 @@
-from urllib import response
 from flask import make_response, render_template
 from flask_restful import Resource, reqparse
 from blacklist import BLACKLIST
 from credentials import BASE_URL
-from models.request import RequestModel
+from models.request import save_request, get_request_datetime
 from models.user import UserModel
 from hash import hash_password, check_hashed_password
 from flask_jwt_extended import create_access_token, get_jwt, jwt_required, decode_token
 import re
-import datetime
 
 def is_email(user_email):
     if re.search(r'[a-zA-Z0-9_-]+@[a-zA-Z0-9]+\.[a-zA-Z]{1,3}$', user_email):
@@ -30,15 +28,6 @@ def received_data(login=False):
 
     return arguments    
 
-def save_request(owner, method, url, response):
-    request_datetime = str(datetime.datetime.now(datetime.timezone.utc))
-    request = RequestModel(request_datetime, owner, method, url, response[0]['message'], response[1])
-
-    try:
-        request.save_request()
-    except:
-        print("An internal error ocurred trying to save request.")
-
 class User(Resource):
     
     @jwt_required()
@@ -51,19 +40,23 @@ class User(Resource):
             if current_user.user_activated:            
                 if jwt_id == user.user_jwt or current_user.user_sudo:
                     response = {'message': 'User returned successfully.'}, 200
-                    save_request(current_user.user_username, "GET", BASE_URL + "/users/" + user_username, response)
+                    request_datetime = get_request_datetime()
+                    save_request(request_datetime, current_user.user_username, "User", "GET", BASE_URL + "/users/" + user_username, response)
                     return user.json(), 200
                 
                 response = {'message':"You do not have access to '{}' information".format(user_username)}, 203
-                save_request(current_user.user_username, "GET", BASE_URL + "/users/" + user_username, response)
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, current_user.user_username, "User", "GET", BASE_URL + "/users/" + user_username, response)
                 return response
 
             response = {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
-            save_request(current_user.user_username, "GET", BASE_URL + "/users/" + user_username, response)
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, current_user.user_username, "User", "GET", BASE_URL + "/users/" + user_username, response)
             return response
 
         response = {'message':"User '{}' not found".format(user_username)}, 404
-        save_request(current_user.user_username, "GET", BASE_URL + "/users/" + user_username, response)
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, current_user.user_username, "User", "GET", BASE_URL + "/users/" + user_username, response)
         return response
 
     @jwt_required()
@@ -79,17 +72,20 @@ class User(Resource):
                 if jwt_id == user.user_jwt or current_user.user_sudo:
                     if data['user_username'] != user_username and UserModel.find_user_by_username(data['user_username']):
                         response = {'message':"The User '{}' already exists.".format(data['user_username'])}, 400
-                        save_request(current_user.user_username, "PUT", BASE_URL + "/users/" + user.user_username, response)
+                        request_datetime = get_request_datetime()
+                        save_request(request_datetime, current_user.user_username, "User", "PUT", BASE_URL + "/users/" + user.user_username, response)
                         return response
 
                     if data['user_email'] != user.user_email and UserModel.find_user_by_email(data['user_email']):
                         response = {'message':"The Email '{}' is already registered in another account.".format(data['user_email'])}, 400
-                        save_request(current_user.user_username, "PUT", BASE_URL + "/users/" + user.user_username, response)
+                        request_datetime = get_request_datetime()
+                        save_request(request_datetime, current_user.user_username, "User", "PUT", BASE_URL + "/users/" + user.user_username, response)
                         return response
 
                     if not is_email(data['user_email']):
                         response = {'message':"The email '{}' sent is not valid.".format(data['user_email'])}
-                        save_request(current_user.user_username, "PUT", BASE_URL + "/users/" + user.user_username, response)
+                        request_datetime = get_request_datetime()
+                        save_request(request_datetime, current_user.user_username, "User", "PUT", BASE_URL + "/users/" + user.user_username, response)
                         return response
 
                     if data['user_email'] != user.user_email:
@@ -110,19 +106,23 @@ class User(Resource):
                         return {'message':'An internal error ocurred trying to save user.'}, 500
                     
                     response = {'message': 'User edited successfully.'}, 200
-                    save_request(current_user.user_username, "PUT", BASE_URL + "/users/" + user.user_username, response)
+                    request_datetime = get_request_datetime()
+                    save_request(request_datetime, current_user.user_username, "User", "PUT", BASE_URL + "/users/" + user.user_username, response)
                     return user.json(), 200
                     
                 response = {'message':"You do not have access to edit '{}' information".format(user_username)}, 203
-                save_request(current_user.user_username, "PUT", BASE_URL + "/users/" + user.user_username, response)
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, current_user.user_username, "User", "PUT", BASE_URL + "/users/" + user.user_username, response)
                 return response
 
             response = {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
-            save_request(current_user.user_username, "PUT", BASE_URL + "/users/" + user.user_username, response)
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, current_user.user_username, "User", "PUT", BASE_URL + "/users/" + user.user_username, response)
             return response
 
         response = {'message':"User '{}' not found.".format(user_username)}, 404
-        save_request(current_user.user_username, "PUT", BASE_URL + "/users/" + user.user_username, response)
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, current_user.user_username, "User", "PUT", BASE_URL + "/users/" + user.user_username, response)
         return response        
 
     @jwt_required()
@@ -139,19 +139,23 @@ class User(Resource):
                         BLACKLIST.add(jwt_id)
 
                     response = {'message':"User '{}' deleted.".format(user_username)}
-                    save_request(current_user.user_username, "DEL", BASE_URL + "/users/" + user_username, response)
+                    request_datetime = get_request_datetime()
+                    save_request(request_datetime, current_user.user_username, "User", "DEL", BASE_URL + "/users/" + user_username, response)
                     return response
                 
                 response = {'message':"You do not have access to delete '{}' information".format(user_username)}, 203
-                save_request(current_user.user_username, "DEL", BASE_URL + "/users/" + user_username, response)
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, current_user.user_username, "User", "DEL", BASE_URL + "/users/" + user_username, response)
                 return response
 
             response = {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
-            save_request(current_user.user_username, "DEL", BASE_URL + "/users/" + user_username, response)
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, current_user.user_username, "User", "DEL", BASE_URL + "/users/" + user_username, response)
             return response
 
         response = {'message':"User '{}' not found.".format(user_username)}, 404
-        save_request(current_user.user_username, "DEL", BASE_URL + "/users/" + user_username, response)
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, current_user.user_username, "User", "DEL", BASE_URL + "/users/" + user_username, response)
         return response
 
 class UserRegister(Resource):
@@ -183,10 +187,11 @@ class UserRegister(Resource):
             user.send_confirmation_email(confirmation_link)
             
             response = {
-                    'message':"User '{}' created successfully! Confirm your account by accessing your email '{}'".format(data['user_username'], data['user_email']), 
+                    'message':"User '{}' created successfully! Confirm your account by accessing your registered email.".format(data['user_username']), 
                     'confirmation_link': confirmation_link                
             }, 201
-            save_request(data['user_username'],"POST", BASE_URL + "/register", response)
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, data['user_username'], "UserRegister","POST", BASE_URL + "/register", response)
             return response
         
         except:
@@ -209,19 +214,23 @@ class UserLogin(Resource):
                     try:
                         user.save_user()
                         response = {'message': 'Login successfully!', 'access_token':access_token}, 200
-                        save_request(user.user_username, "POST", BASE_URL + "/login", response)
+                        request_datetime = get_request_datetime()
+                        save_request(request_datetime, user.user_username, "UserLogin", "POST", BASE_URL + "/login", response)
                         return response
                     except:
                         response = {'message':'An internal error ocurred trying to save user.'}, 500
-                        save_request(user.user_username, "POST", BASE_URL + "/login", response)
+                        request_datetime = get_request_datetime()
+                        save_request(request_datetime, user.user_username, "UserLogin", "POST", BASE_URL + "/login", response)
                         return response
 
                 response = {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(user.user_username, user.user_email)}, 401
-                save_request(user.user_username, "POST", BASE_URL + "/login", response)
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, user.user_username, "UserLogin", "POST", BASE_URL + "/login", response)
                 return response    
 
             response = {'message':'Username or password is incorrect.'}, 401
-            save_request(user.user_username, "POST", BASE_URL + "/login", response)
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, user.user_username, "UserLogin", "POST", BASE_URL + "/login", response)
             return response
 
         return {'massage':"The User '{}' not exists.".format(data['user_username'])}, 400
@@ -234,7 +243,8 @@ class UserLogout(Resource):
         current_user = UserModel.find_user_by_jwt(jwt_id)
         BLACKLIST.add(jwt_id)
         response = {'message':'Logged out successfully!'}, 200
-        save_request(current_user.user_username, "POST", BASE_URL + "/logout", response)
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, current_user.user_username, "UserLogout", "POST", BASE_URL + "/logout", response)
         return response
 
 class UserConfirm(Resource):
