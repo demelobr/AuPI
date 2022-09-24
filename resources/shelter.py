@@ -1,4 +1,6 @@
 from flask_restful import Resource, reqparse
+from credentials import BASE_URL
+from models.request import save_request, get_request_datetime
 from models.shelter import ShelterModel
 from models.user import UserModel
 from sql_alchemy import db
@@ -23,16 +25,24 @@ class Shelter(Resource):
         shelter = ShelterModel.find_shelter_by_name(shelter_name)
   
         if shelter:
+            response = {'message': 'Shelter returned successfully.'}, 200
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, "Undefined", "Shelter", "GET", BASE_URL + "/shelters/"  + shelter_name, response)
             return shelter.json(), 200
-        
-        return {'message':"Shelter '{}' not found.".format(shelter_name)}, 404
-    
+
+        response = {'message':"Shelter '{}' not found.".format(shelter_name)}, 404
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, "Undefined", "Shelter", "GET", BASE_URL + "/shelters/" + shelter_name, response)
+        return response
+
     @jwt_required()
     def put(self, shelter_name):
         arguments = received_data()
         data = arguments.parse_args()
-        shelter = ShelterModel.find_shelter_by_name(data['shelter_name'])
+        shelter = ShelterModel.find_shelter_by_name(shelter_name)
         
+        print(shelter)
+
         jwt_id = get_jwt()['jti']
         current_user = UserModel.find_user_by_jwt(jwt_id)
 
@@ -44,11 +54,20 @@ class Shelter(Resource):
                 except:
                     return {'message':'An internal error ocurred trying to save shelter.'}, 500
                 
+                response = {'message':'Shelter successfully edited.'}, 200
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, current_user.user_username, "Shelter", "PUT", BASE_URL + "/shelters/" + shelter_name, response)
                 return shelter.json(), 200
-        
-            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
-        
-        return {'message':"Shelter '{}' not found.".format(shelter_name)}, 404
+
+            response = {'message':"User '{}' not confirmed. Access the email to activate your account".format(current_user.user_username)}, 401
+            request_datetime = get_request_datetime()  
+            save_request(request_datetime, current_user.user_username, "Shelter", "PUT", BASE_URL + "/shelters/" + shelter_name, response)
+            return response
+
+        response = {'message':"Shelter '{}' not found.".format(shelter_name)}, 404
+        request_datetime = get_request_datetime()  
+        save_request(request_datetime, current_user.user_username, "Shelter", "PUT", BASE_URL + "/shelters/" + shelter_name, response)
+        return response
 
     @jwt_required()
     def delete(self, shelter_name):
@@ -60,11 +79,21 @@ class Shelter(Resource):
         if shelter:
             if current_user.user_activated:
                 shelter.delete_shelter()
-                return {'message':"Shelter '{}' deleted.".format(shelter_name)}
-        
-            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+                response = {'message':"Shelter '{}' deleted.".format(shelter_name)}
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, current_user.user_username, "Shelter", "DELETE", BASE_URL + "/shelters/" + shelter_name, response)
+                return response
 
-        return {'message':"User '{}' not found.".format(shelter_name)}, 404
+            response = {'message':"User '{}' not confirmed. Access the email to activate your account".format(current_user.user_username)}, 401
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, current_user.user_username, "Shelter", "DELETE", BASE_URL + "/shelters/" + shelter_name, response)
+            return response
+
+        response = {'message':"User '{}' not found.".format(shelter_name)}, 404
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, current_user.user_username, "Shelter", "DELETE", BASE_URL + "/shelters/" + shelter_name, response)
+        return response
+
 
 class Shelters(Resource):
 
@@ -110,7 +139,10 @@ class Shelters(Resource):
         else:
             query = db.session.query(ShelterModel).filter(*all_filters).limit(filters['limit']).offset(filters['offset']).all()
 
-        return {"shelters": [shelter.json() for shelter in query]}
+        response = {'message':'Sheltrs returned successfully.'}, 200
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, "Undefined", "Shelters", "GET", BASE_URL + "/shelters", response)
+        return {"shelters": [shelter.json() for shelter in query]}, 200
 
     @jwt_required()
     def post(self):
@@ -123,15 +155,27 @@ class Shelters(Resource):
 
         if current_user.user_activated:
             if shelter:
-                return {"message": "The Shelter '{}' already exists.".format(data['shelter_name'])}, 400
-            
+                response = {"message": "The Shelter '{}' already exists.".format(data['shelter_name'])}, 400
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, current_user.user_username, "Shelters", "POST", BASE_URL + "/shelters", response)
+                return response
+
             shelter = ShelterModel(**data)
 
             try:
                 shelter.save_shelter()
             except:
-                return {'message':'An internal error ocurred trying to save shelter.'}, 500
-            
+                response = {'message':'An internal error ocurred trying to save shelter.'}, 500
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, current_user.user_username, "Shelters", "POST", BASE_URL + "/shelters", response)
+                return response
+
+            response = {'message':'Shelter created successfully.'}, 201
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, current_user.user_username, "Shelters", "POST", BASE_URL + "/shelters", response)
             return shelter.json(), 201
-        
-        return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+
+        response = {'message':"User '{}' not confirmed. Access the email to activate your account".format(current_user.user_username)}, 401
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, current_user.user_username, "Shelters", "POST", BASE_URL + "/shelters", response)
+        return response

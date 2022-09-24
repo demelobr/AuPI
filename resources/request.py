@@ -85,7 +85,3 @@ class Requests(Resource):
             query = db.session.query(RequestModel).filter(*all_filters).limit(filters['limit']).offset(filters['offset']).all()
 
         return {"requests": [request.json() for request in query]}
-
-    @jwt_required()
-    def delete(self):
-        pass
