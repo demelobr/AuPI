@@ -1,4 +1,6 @@
 from flask_restful import Resource, reqparse
+from credentials import BASE_URL
+from models.request import save_request, get_request_datetime
 from models.dog import DogModel
 from models.shelter import ShelterModel
 from models.user import UserModel
@@ -20,9 +22,15 @@ class Dog(Resource):
         dog = DogModel.find_dog_by_id(dog_id)
 
         if dog:
+            response = {'message': 'Dog returned successfully.'}, 200
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, "Undefined", "Dog", "GET", BASE_URL + "/dogs/" + str(dog_id), response)
             return dog.json(), 200
         
-        return {'message':"Dog with ID:{} not found.".format(dog_id)}, 404
+        response = {'message':"Dog with ID:{} not found.".format(dog_id)}, 404
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, "Undefined", "Dog", "GET", BASE_URL + "/dogs/" + str(dog_id), response)
+        return response
 
     @jwt_required()
     def put(self, dog_id):
@@ -44,15 +52,30 @@ class Dog(Resource):
                         except:
                             return {'message':'An internal error ocurred trying to save dog.'}, 500
 
+                        response = {'message':'Dog successfully edited.'}, 200
+                        request_datetime = get_request_datetime()
+                        save_request(request_datetime, current_user.user_username, "Dog", "PUT", BASE_URL + "/dogs/" + str(dog_id), response)
                         return dog.json(), 200
 
-                    return {'message': "Unable to save the dog as the birthday date format must be 'dd/mm/yyyy'."}, 401
-                
-                return {'message':"Shelter '{}' not found.".format(data['dog_shelter'])}, 404
+                    response = {'message': "Unable to save the dog as the birthday date format must be 'dd/mm/yyyy'."}, 401
+                    request_datetime = get_request_datetime()
+                    save_request(request_datetime, current_user.user_username, "Dog", "PUT", BASE_URL + "/dogs/" + str(dog_id), response)
+                    return response
 
-            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+                response = {'message':"Shelter '{}' not found.".format(data['dog_shelter'])}, 404
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, current_user.user_username, "Dog", "PUT", BASE_URL + "/dogs/" + str(dog_id), response)
+                return response
 
-        return {'message':"Dog with ID:{} not found.".format(dog_id)}, 404
+            response = {'message':"User '{}' not confirmed. Access the email to activate your account".format(current_user.user_username)}, 401
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, current_user.user_username, "Dog", "PUT", BASE_URL + "/dogs/" + str(dog_id), response)
+            return response
+
+        response = {'message':"Dog with ID:{} not found.".format(dog_id)}, 404
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, current_user.user_username, "Dog", "PUT", BASE_URL + "/dogs/" + str(dog_id), response)
+        return response
 
     @jwt_required()
     def delete(self, dog_id):
@@ -64,11 +87,20 @@ class Dog(Resource):
         if dog:
             if current_user.user_activated:
                 dog.delete_dog()
-                return {'message':"Dog with ID:{} deleted.".format(dog_id)}
+                response = {'message':"Dog with ID:{} deleted.".format(dog_id)}, 200
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, current_user.user_username, "Dog", "DELETE", BASE_URL + "/dogs/" + str(dog_id), response)
+                return response
 
-            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+            response = {'message':"User '{}' not confirmed. Access the email to activate your account".format(current_user.user_username)}, 401
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, current_user.user_username, "Dog", "DELETE", BASE_URL + "/dogs/" + str(dog_id), response)
+            return response
 
-        return {'message':"Dog with ID:{} not found.".format(dog_id)}, 404
+        response = {'message':"Dog with ID:{} not found.".format(dog_id)}, 404
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, current_user.user_username, "Dog", "DELETE", BASE_URL + "/dogs/" + str(dog_id), response)
+        return response
         
 class Dogs(Resource):
     query_params = reqparse.RequestParser()
@@ -110,7 +142,10 @@ class Dogs(Resource):
         else:
             query = db.session.query(DogModel).filter(*all_filters).limit(filters['limit']).offset(filters['offset']).all()
 
-        return {"dogs": [dog.json() for dog in query]}
+        response = {'message':'Dogs returned successfully.'}, 200
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, "Undefined", "Dogs", "GET", BASE_URL + "/dogs", response)
+        return {"dogs": [dog.json() for dog in query]}, 200
 
     @jwt_required()
     def post(self):
@@ -129,12 +164,27 @@ class Dogs(Resource):
                     try:
                         dog.save_dog()
                     except:
-                        return {'message':'An internal error ocurred trying to save dog.'}, 500
+                        response = {'message':'An internal error ocurred trying to save dog.'}, 500
+                        request_datetime = get_request_datetime()
+                        save_request(request_datetime, current_user.user_username, "Dogs", "POST", BASE_URL + "/dogs", response)
+                        return response
 
+                    response = {'message':'Dogs created successfully.'}, 201
+                    request_datetime = get_request_datetime()
+                    save_request(request_datetime, current_user.user_username, "Dogs", "POST", BASE_URL + "/dogs", response)
                     return dog.json(), 201
 
-                return {'message': "Unable to save the dog as the birthday date format must be 'dd/mm/yyyy'."}, 401   
+                response = {'message': "Unable to save the dog as the birthday date format must be 'dd/mm/yyyy'."}, 401   
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, current_user.user_username, "Dogs", "POST", BASE_URL + "/dogs", response)
+                return response
 
-            return {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+            response = {'message':"User '{}' not confirmed. Access the email to activate your account".format(current_user.user_username)}, 401
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, current_user.user_username, "Dogs", "POST", BASE_URL + "/dogs", response)
+            return response
 
-        return {'message':"Shelter '{}' not found.".format(data['dog_shelter'])}, 404
+        response = {'message':"Shelter '{}' not found.".format(data['dog_shelter'])}, 404
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, current_user.user_username, "Dogs", "POST", BASE_URL + "/dogs", response)
+        return response

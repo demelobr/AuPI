@@ -94,7 +94,6 @@ class Shelter(Resource):
         save_request(request_datetime, current_user.user_username, "Shelter", "DELETE", BASE_URL + "/shelters/" + shelter_name, response)
         return response
 
-
 class Shelters(Resource):
 
     query_params = reqparse.RequestParser()
