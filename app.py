@@ -2,6 +2,7 @@ from flask import Flask, jsonify, render_template
 from flask_restful import Api
 from blacklist import BLACKLIST
 from models.user import UserModel
+from models.request import save_request, get_request_datetime
 from resources.dog import Dogs, Dog, DogVerified
 from resources.shelter import Shelter, Shelters, ShelterVerified
 from resources.user import User, UserConfirm, UserRegister, UserLogin, UserLogout
@@ -9,9 +10,7 @@ from resources.request import Request, Requests
 from flask_jwt_extended import JWTManager
 from credentials import SECRET_KEY
 import datetime
-import os
 
-#SECRET_KEY = os.environ.get('SECRET_KEY')
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db'
@@ -26,7 +25,9 @@ jwt = JWTManager(app)
 @app.before_first_request
 def startup():
     db.create_all()
-    #UserModel.create_admin()
+    response = UserModel.create_admin()
+    request_datetime = get_request_datetime()
+    save_request(request_datetime, "system", "undefined", "undefined", "undefined", response)
 
 @jwt.token_in_blocklist_loader
 def blacklist_verify(self, token):
