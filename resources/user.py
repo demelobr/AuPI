@@ -148,7 +148,7 @@ class User(Resource):
                 save_request(request_datetime, current_user.user_username, "User", "DEL", BASE_URL + "/users/" + user_username, response)
                 return response
 
-            response = {'message':"User '{}' not confirmed. Access the email '{}' to activate your account".format(current_user.user_username, current_user.user_email)}, 401
+            response = {'message':"User '{}' not confirmed. Access the email to activate your account".format(current_user.user_username)}, 401
             request_datetime = get_request_datetime()
             save_request(request_datetime, current_user.user_username, "User", "DEL", BASE_URL + "/users/" + user_username, response)
             return response

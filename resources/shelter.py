@@ -1,10 +1,11 @@
+from email.policy import default
 from flask_restful import Resource, reqparse
 from credentials import BASE_URL
 from models.request import save_request, get_request_datetime
 from models.shelter import ShelterModel
 from models.user import UserModel
-from sql_alchemy import db
 from flask_jwt_extended import jwt_required, get_jwt
+from sql_alchemy import db
 
 def received_data():
     arguments = reqparse.RequestParser()
@@ -105,6 +106,7 @@ class Shelters(Resource):
     query_params.add_argument('country', type=str, default="", location="args")
     query_params.add_argument('state', type=str, default="", location="args")
     query_params.add_argument('city', type=str, default="", location="args")
+    query_params.add_argument('verified', type=bool, default=False,location="args")
     query_params.add_argument('limit', type=int, default=10, location="args")
     query_params.add_argument('offset', type=int, default=0, location="args")
     
@@ -128,6 +130,8 @@ class Shelters(Resource):
             all_filters.append(ShelterModel.shelter_state.like(filters['state']))
         if filters['city']:
             all_filters.append(ShelterModel.shelter_city.like(filters['city']))
+        if filters['verified']:
+            all_filters.append(ShelterModel.shelter_verified == filters['verified'])
 
         if not filters['limit'] and not filters['offset']:
             query = db.session.query(ShelterModel).filter(*all_filters).all()
@@ -177,4 +181,39 @@ class Shelters(Resource):
         response = {'message':"User '{}' not confirmed. Access the email to activate your account".format(current_user.user_username)}, 401
         request_datetime = get_request_datetime()
         save_request(request_datetime, current_user.user_username, "Shelters", "POST", BASE_URL + "/shelters", response)
+        return response
+
+class ShelterVerified(Resource):
+    
+    @jwt_required()
+    def post(cls, shelter_name):
+        shelter = ShelterModel.find_shelter_by_name(shelter_name)
+        
+        jwt_id = get_jwt()['jti']
+        current_user = UserModel.find_user_by_jwt(jwt_id)
+
+        current_user.user_sudo = True
+        
+        if current_user.user_activated:
+            if current_user.user_sudo:
+                if shelter:
+                    shelter.verified_shelter()
+                    response = {'message':'Shelter check done.'}, 200
+                    request_datetime = get_request_datetime()
+                    save_request(request_datetime, current_user.user_username, "ShelterVirified", "POST", BASE_URL + "/shelters/verified/" + shelter_name, response)
+                    return response
+                
+                response = {"message": "The Shelter '{}' already exists.".format(shelter_name)}, 400
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, current_user.user_username, "ShelterVirified", "POST", BASE_URL + "/shelters/verified/" + shelter_name, response)
+                return response
+            
+            response = {'message':"You do not have access to verified '{}' information".format(shelter_name)}, 203
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, current_user.user_username, "ShelterVirified", "POST", BASE_URL + "/shelters/verified/" + shelter_name, response)
+            return response
+        
+        response = {'message':"User '{}' not confirmed. Access the email to activate your account".format(current_user.user_username)}, 401
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, current_user.user_username, "ShelterVirified", "POST", BASE_URL + "/shelters/verified/" + shelter_name, response)
         return response

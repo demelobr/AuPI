@@ -2,8 +2,8 @@ from flask import Flask, jsonify, render_template
 from flask_restful import Api
 from blacklist import BLACKLIST
 from models.user import UserModel
-from resources.dog import Dogs, Dog
-from resources.shelter import Shelter, Shelters
+from resources.dog import Dogs, Dog, DogVerified
+from resources.shelter import Shelter, Shelters, ShelterVerified
 from resources.user import User, UserConfirm, UserRegister, UserLogin, UserLogout
 from resources.request import Request, Requests
 from flask_jwt_extended import JWTManager
@@ -42,8 +42,10 @@ def index():
 
 api.add_resource(Shelters, '/shelters')
 api.add_resource(Shelter, '/shelters/<string:shelter_name>')
+api.add_resource(ShelterVerified, '/shelters/verified/<string:shelter_name>')
 api.add_resource(Dogs, '/dogs')
 api.add_resource(Dog, '/dogs/<int:dog_id>')
+api.add_resource(DogVerified, '/dogs/verified/<int:dog_id>')
 api.add_resource(User, '/users/<string:user_username>')
 api.add_resource(UserRegister, '/register')
 api.add_resource(UserLogin, '/login')

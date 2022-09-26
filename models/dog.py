@@ -1,4 +1,5 @@
 from datetime import datetime
+from email.policy import default
 from models.shelter import ShelterModel
 from sql_alchemy import db
 
@@ -13,6 +14,7 @@ class DogModel(db.Model):
     dog_country = db.Column(db.String(20))
     dog_state = db.Column(db.String(20))
     dog_city = db.Column(db.String(20))
+    dog_verified = db.Column(db.Boolean, default=False)
 
     def __init__(self, dog_name, dog_shelter, dog_birth_date, dog_gender):
         self.dog_name = dog_name
@@ -29,7 +31,8 @@ class DogModel(db.Model):
             'dog_gender': self.dog_gender,
             'dog_country': self.dog_country,
             'dog_state': self.dog_state,
-            'dog_city': self.dog_city
+            'dog_city': self.dog_city,
+            'dog_verified': self.dog_verified
         }
     
     @classmethod
@@ -45,6 +48,14 @@ class DogModel(db.Model):
             return bool(datetime.strptime(self.dog_birth_date, format_date))
         except ValueError:
             return False
+
+    def verified_dog(self):
+        self.dog_verified = True
+
+        try:
+            self.save_dog()
+        except:
+            return {'message': "An internal error ocurred trying to save dog location."}, 500
 
     def set_dog_location(self):
         shelter = ShelterModel.find_shelter_by_name(self.dog_shelter)

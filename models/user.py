@@ -1,4 +1,3 @@
-from email.policy import default
 from sql_alchemy import db
 from email.message import EmailMessage
 from hash import hash_password

@@ -1,3 +1,4 @@
+from email.policy import default
 from flask_restful import Resource, reqparse
 from credentials import BASE_URL
 from models.request import save_request, get_request_datetime
@@ -111,6 +112,7 @@ class Dogs(Resource):
     query_params.add_argument('country', type=str, default="", location="args")
     query_params.add_argument('state', type=str, default="", location="args")
     query_params.add_argument('city', type=str, default="", location="args")
+    query_params.add_argument('verified', type=bool, default=False, location="args")
     query_params.add_argument('limit', type=int, default=10, location="args")
     query_params.add_argument('offset', type=int, default=0, location="args")    
 
@@ -132,6 +134,8 @@ class Dogs(Resource):
             all_filters.append(DogModel.dog_state.like(filters['state']))
         if filters['city']:
             all_filters.append(DogModel.dog_city.like(filters['city']))
+        if filters['verified']:
+            all_filters.append(DogModel.dog_verified == filters['verified'])
 
         if not filters['limit'] and not filters['offset']:
             query = db.session.query(DogModel).filter(*all_filters).all()
@@ -187,4 +191,39 @@ class Dogs(Resource):
         response = {'message':"Shelter '{}' not found.".format(data['dog_shelter'])}, 404
         request_datetime = get_request_datetime()
         save_request(request_datetime, current_user.user_username, "Dogs", "POST", BASE_URL + "/dogs", response)
+        return response
+
+class DogVerified(Resource):
+    
+    @jwt_required()
+    def post(cls, dog_id):
+        dog = DogModel.find_dog_by_id(dog_id)
+        
+        jwt_id = get_jwt()['jti']
+        current_user = UserModel.find_user_by_jwt(jwt_id)
+        
+        current_user.user_sudo = True
+
+        if current_user.user_activated:
+            if current_user.user_sudo:
+                if dog:
+                    dog.verified_dog()
+                    response = {'message':'Dog check done.'}, 200
+                    request_datetime = get_request_datetime()
+                    save_request(request_datetime, current_user.user_username, "DogVirified", "POST", BASE_URL + "/dogs/verified/" + str(dog_id), response)
+                    return response
+                
+                response = {"message": "The Dog '{}' already exists.".format(dog_id)}, 400
+                request_datetime = get_request_datetime()
+                save_request(request_datetime, current_user.user_username, "DogVirified", "POST", BASE_URL + "/dogs/verified/" + str(dog_id), response)
+                return response
+            
+            response = {'message':"You do not have access to verified '{}' information".format(dog_id)}, 203
+            request_datetime = get_request_datetime()
+            save_request(request_datetime, current_user.user_username, "DogVirified", "POST", BASE_URL + "/dogs/verified/" + str(dog_id), response)
+            return response
+        
+        response = {'message':"User '{}' not confirmed. Access the email to activate your account".format(current_user.user_username)}, 401
+        request_datetime = get_request_datetime()
+        save_request(request_datetime, current_user.user_username, "DogVirified", "POST", BASE_URL + "/dogs/verified/" + str(dog_id), response)
         return response
