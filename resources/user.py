@@ -138,7 +138,7 @@ class User(Resource):
                     if not current_user.user_sudo:
                         BLACKLIST.add(jwt_id)
 
-                    response = {'message':"User '{}' deleted.".format(user_username)}
+                    response = {'message':"User '{}' deleted.".format(user_username)}, 200
                     request_datetime = get_request_datetime()
                     save_request(request_datetime, current_user.user_username, "User", "DEL", BASE_URL + "/users/" + user_username, response)
                     return response

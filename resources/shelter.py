@@ -80,7 +80,7 @@ class Shelter(Resource):
         if shelter:
             if current_user.user_activated:
                 shelter.delete_shelter()
-                response = {'message':"Shelter '{}' deleted.".format(shelter_name)}
+                response = {'message':"Shelter '{}' deleted.".format(shelter_name)}, 200
                 request_datetime = get_request_datetime()
                 save_request(request_datetime, current_user.user_username, "Shelter", "DELETE", BASE_URL + "/shelters/" + shelter_name, response)
                 return response
