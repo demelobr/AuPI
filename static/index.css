@@ -372,3 +372,86 @@
         transform: rotate(40deg);
     }
 }
+
+/* ====================== REGISTER TAB ===================== */
+.requests-section{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;    
+}
+
+/* ====================== REGISTER TAB ===================== */
+
+.url{
+    color: white;
+}
+
+.get{
+    color: greenyellow;
+}
+
+.post{
+    color: yellow;
+}
+
+.put{
+    color: blue;
+}
+
+.del{
+    color: red;
+}
+
+#requests-section{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-direction: column;
+
+}
+
+#register-section{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-direction: column;
+}
+
+.accordion{
+    --bs-accordion-inner-border-radius: 0;
+}
+
+.accordion-flush .accordion-item .accordion-button{
+    background-color: rgb(53, 54, 58);
+}
+
+.accordion-button:not(.collapsed)::after{
+    background-image: var(--bs-accordion-btn-icon);
+}
+
+.accordion-body{
+    background-color: rgb(53, 54, 58);
+}
+
+#register-section h2{
+    font-family: 'Bree Serif', serif;
+    color: yellow;    
+}
+
+#register-section h3{
+    color: rgb(53, 54, 58);
+}
+
+#register-section p{
+    color: white;
+}
+
+#register-tab{
+    width: 75%;
+}

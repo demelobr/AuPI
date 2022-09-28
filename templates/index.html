@@ -6,7 +6,7 @@
         <div class="col-md-6">
             <h1><span>Bem-vindos!</span></h1>
             <h2>Junte-se a nós e nos ajude a encontrar um lar para nossos <span>Aumigos!</span></h2>
-            <a class="doc-aupi-btn" href="{{ base_url }}">Iniciar!</a> 
+            <a class="doc-aupi-btn" href="#requests-section">Iniciar!</a> 
         </div>
         <div class="col-md-6">
           <div class="dog">
@@ -39,5 +39,51 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div id="requests-section">
+
+    <div id="register-section">
+      <h2>Registro</h2>
+      <p>Use o recurso de registro para criar uma conta na nossa AuPi.</p>
+      <p>URL: http://127.0.0.1:5000/register</p>
+      <p>Métodos disponíveis: <span class="post">POST</span>.</p>
+      <div class="accordion accordion-flush" id="register-tab">
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="flush-headingOne">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+              <span class="post">[POST] --</span><span class="url">> "/register"</span>
+            </button>
+          </h2>
+          <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
+            <div class="accordion-body">
+              <code>
+                import json
+                import requests
+
+                URL_BASE = {{ base_url }}
+                body_register = {
+                  "user_username":"demelo",
+                  "user_name":"Bruno Melo",
+                  "user_email":"digif74384@geekjun.com",
+                  "user_phone_number":"8196584625",
+                  "user_password":"12345"
+              }
+              
+              headers_register = {
+                  "Content-Type": "application/json"
+              }
+              
+              response = requests.request('POST', URL_BASE + '/register', json=body_register, headers=headers_register)
+              
+              print(response.json())
+              print(response.status_code)
+              </code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 {% endblock %}
